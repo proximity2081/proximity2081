@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let textData = [];
     let texts = [];
     let authors = [];
-    fetch("quotes.json")
+    fetch("programming_quotes.json")
         .then(response => response.json())
         .then(data => {
             textData = data;
