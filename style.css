@@ -49,28 +49,40 @@ body, html {
   }
 
   #stats-table {
-    margin: 15px;
+    width: 400px;
+    table-layout: fixed;
+    margin: 15px 0px 25px;
   }
 
   #stats-table td {
     text-align: center;
     vertical-align: middle;
-    padding: 0px 25px 0px;
+    padding: 0px 10px;
   }
   
   .stats-label {
     font-size: 18px;
     font-weight: bold;
-    margin-bottom: 5px;
+    padding: 0px 10px;
   }
   
   .stats-value {
     font-size: 24px;
-    margin: 5px 25px 0px;
+    width: 100%;
+  }
+
+  .buttons-table {
+    width: 350px;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  .buttons-table button {
+    width: 100%;
   }
   
   .stats-btn {
-    padding: 10px 20px;
+    padding: 10px;
     font-size: 16px;
   }
   
@@ -80,4 +92,3 @@ body, html {
       width: 90%;
     }
   }
-  
