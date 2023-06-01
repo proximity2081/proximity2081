@@ -8,25 +8,32 @@
     <div class="wrapper">
         <div id="text-area">
             <p id="text-display"></p>
+            <img src="loading_animation.gif" id="loading-animation" style="width:50px;height:50px;" alt="loading...">
             <p id="author-display"></p>
-            <input type="text" id="text-input" rows="1" placeholder="Start typing here..." />
+            <input type="text" id="text-input" rows="1" tabindex="1" placeholder="Start typing here..." />
         </div>
         <table id="stats-table">
           <tr>
             <th class="stats-label">WPM</th>
             <th class="stats-label">Accuracy</th>
             <th class="stats-label">Errors</th>
+            <th class="stats-label">Time</th>
           </tr>
           <tr>
             <td class="stats-value" id="wpm-value">0</td>
             <td class="stats-value" id="accuracy-value">0%</td>
             <td class="stats-value" id="errors-value">0</td>
+            <td class="stats-value" id="time-value">0 s</td>
           </tr>
         </table>
-        <div id="s">
-            <button class="stats-btn" id="reset-btn">Reset</button>
-            <button class="stats-btn" id="next-btn">Next</button>
-        </div>
+        <table class=buttons-table>
+            <tr>
+                <td><button class="stats-btn" id="previous-btn" tabindex="4">Previous</button></td>
+                <td><button class="stats-btn" id="reset-btn" tabindex="3">Reset</button></td>
+                <td><button class="stats-btn" id="next-btn" tabindex="2">Next</button></td>
+            </tr>
+        </table>
     </div>
+    <script type="text/javascript" src="pako.min.js"></script>
     <script type="text/javascript" src="script.js"></script>
 </html>
