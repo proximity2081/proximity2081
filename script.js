@@ -1,3 +1,17 @@
+// Register the Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+
+
 document.addEventListener("DOMContentLoaded", function() {
     const textDisplay = document.getElementById("text-display");
     const authorDisplay = document.getElementById("author-display");
@@ -5,23 +19,49 @@ document.addEventListener("DOMContentLoaded", function() {
     const statsWPM = document.getElementById("wpm-value");
     const statsAccuracy = document.getElementById("accuracy-value");
     const statsErrors = document.getElementById("errors-value");
+    const statsTime = document.getElementById("time-value");
     const statsResetBtn = document.getElementById("reset-btn");
     const statsNextBtn = document.getElementById("next-btn");
+    const loadingAnimation = document.getElementById("loading-animation");
 
-    let startTime, endTime;
+    
+    // Fetch the gzip JSON file
+    fetch('/lex_fridman_podcast_quotes.json.gz')
+        .then(function(response) {
+            // Get the response as a blob
+            return response.blob();
+        })
+        .then(function(blob) {
+            var reader = new FileReader();
+
+            reader.onload = function() {
+                // Get the decompressed JSON data
+                var decompressedData = pako.ungzip(reader.result, { to: 'string' });
+
+                // Parse the JSON data
+                textData = JSON.parse(decompressedData);
+
+                texts = textData.map(element => element["quote"]);
+                authors = textData.map(element => element["author"]);
+
+                initialize();
+
+                loadingAnimation.style.display = "none";
+            };
+
+            // Read the blob as text
+            reader.readAsArrayBuffer(blob);
+        })
+        .catch(function(error) {
+            console.log('Error:', error);
+        });
+    
 
     let textData = [];
     let texts = [];
     let authors = [];
-    fetch("programming_quotes.json")
-        .then(response => response.json())
-        .then(data => {
-            textData = data;
-            texts = textData.map(element => element["quote"]);
-            authors = textData.map(element => element["author"]);
-            initialize();
-        });
 
+    let startTime, endTime;
     let currentText = "";
     let totalCharactersTyped = 0;
     let errorCount = 0;
@@ -59,9 +99,13 @@ document.addEventListener("DOMContentLoaded", function() {
         endTime = Date.now();
     }
 
-    function getCPM() {
+    function getTimeDelta() {
         endTimer();
-        const elapsedTimeInMinutes = (endTime - startTime) / 60000;
+        return endTime - startTime;
+    }
+
+    function getCPM() {
+        const elapsedTimeInMinutes = getTimeDelta() / 60000;
         let numberOfCorrectCharactersTyped = typedText.length;
         for (let i=0; i<typedText.length; i++) {
             if (typedText[i] != currentText[i]) {
@@ -73,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function getAccuracy() {
-        return Math.round((1 - (errorCount / totalCharactersTyped)) * 100);
+        return (1 - (errorCount / totalCharactersTyped)) * 100;
     }
 
     function updateStats() {
@@ -81,11 +125,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const charactersPerMinute = getCPM();
         const wordsPerMinute = Math.round(charactersPerMinute / 5); // Assumes the average word length is 5 characters
         const accuracy = getAccuracy();
+        const millisecondsElapsed = getTimeDelta();
+        const secondsElapsed = Math.floor(millisecondsElapsed / 1000);
 
         statsWPM.textContent = wordsPerMinute;
         statsWPM.title = Math.round(charactersPerMinute) + " CPM";
-        statsAccuracy.textContent = accuracy + "%";
+        statsAccuracy.textContent = Math.round(accuracy) + "%";
+        statsAccuracy.title = Math.round(accuracy*100)/100 + "%";
         statsErrors.textContent = errorCount;
+        statsTime.textContent = secondsElapsed + " s";
+        statsTime.title = millisecondsElapsed + " ms"
     }
 
     function checkInput() {
@@ -105,11 +154,14 @@ document.addEventListener("DOMContentLoaded", function() {
         if (typedText === currentText) {
             saveScore();
             startedTyping = false;
+            totalReset();
+            /*
             textInput.readOnly = true;
             setTimeout(function() {
                 totalReset();
                 textInput.readOnly = false;
             }, 1000);
+            */
         } else {
             if (typedText === correctText) {
                 textInput.classList.remove("error");
