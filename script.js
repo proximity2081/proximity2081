@@ -12,6 +12,21 @@ if ('serviceWorker' in navigator) {
 }
 
 
+let quotes = [];
+let texts = [];
+let authors = [];
+let urls = [];
+
+let startTime, endTime;
+let currentText = "";
+let totalCharactersTyped = 0;
+let errorCount = 0;
+let typedText = "";
+let startedTyping = false
+let previousTypedLength = 0;
+
+let scores = [];
+
 document.addEventListener("DOMContentLoaded", function() {
     const textDisplay = document.getElementById("text-display");
     const authorDisplay = document.getElementById("author-display");
@@ -24,52 +39,31 @@ document.addEventListener("DOMContentLoaded", function() {
     const statsNextBtn = document.getElementById("next-btn");
     const loadingAnimation = document.getElementById("loading-animation");
 
-    
-    // Fetch the gzip JSON file
-    fetch('/lex_fridman_podcast_quotes.json.gz')
-        .then(function(response) {
-            // Get the response as a blob
-            return response.blob();
+    let numberOfBatches = 11;
+    let quotesFilename = "quotes/quotes_"+Math.floor(Math.random()*numberOfBatches).toString()+".json"
+    fetch(quotesFilename)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(podcast => {
+                podcast["quotes"].forEach(quote => {
+                    let quoteCopy = {};
+                    quoteCopy["url"] = "https://www.youtube.com/watch?v="+podcast["id"]+"&t="+quote["time"];
+                    quoteCopy["author"] = podcast["title"];
+                    quoteCopy["quote"] = quote["text"];
+                    quotes.push(quoteCopy);
+                });
+            });
+            console.log(quotes.length);
+            texts = quotes.map(element => element["quote"]);
+            authors = quotes.map(element => element["author"]);
+            urls = quotes.map(element => element["url"]);
+            initialize();
+            loadingAnimation.style.display = "none";
         })
-        .then(function(blob) {
-            var reader = new FileReader();
-
-            reader.onload = function() {
-                // Get the decompressed JSON data
-                var decompressedData = pako.ungzip(reader.result, { to: 'string' });
-
-                // Parse the JSON data
-                textData = JSON.parse(decompressedData);
-
-                texts = textData.map(element => element["quote"]);
-                authors = textData.map(element => element["author"]);
-
-                initialize();
-
-                loadingAnimation.style.display = "none";
-            };
-
-            // Read the blob as text
-            reader.readAsArrayBuffer(blob);
-        })
-        .catch(function(error) {
+        .catch(error => {
             console.log('Error:', error);
         });
-    
 
-    let textData = [];
-    let texts = [];
-    let authors = [];
-
-    let startTime, endTime;
-    let currentText = "";
-    let totalCharactersTyped = 0;
-    let errorCount = 0;
-    let typedText = "";
-    let startedTyping = false
-    let previousTypedLength = 0;
-
-    let scores = [];
 
     function changeText() {
         let index;
@@ -89,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function() {
         currentText = texts[index];
         textDisplay.textContent = currentText;
         authorDisplay.textContent = authors[index];
+        authorDisplay.href = urls[index];
     }
 
     function startTimer() {
