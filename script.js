@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const statsNextBtn = document.getElementById("next-btn");
     const loadingAnimation = document.getElementById("loading-animation");
 
-    let numberOfBatches = 11;
+    let numberOfBatches = 29;
     let quotesFilename = "quotes/quotes_"+Math.floor(Math.random()*numberOfBatches).toString()+".json"
     fetch(quotesFilename)
         .then(response => response.json())
