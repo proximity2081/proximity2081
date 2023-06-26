@@ -1,4 +1,4 @@
-var cacheName = "cache-0"
+var cacheName = "cache-1"
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -6,7 +6,10 @@ self.addEventListener('install', function(event) {
       return cache.addAll([
         'script.js',
         'style.css',
-        'loading_animation.gif'
+        'loading_animation.gif',
+        'previous.svg',
+        'reset.svg',
+        'next.svg'
       ]);
     })
   );
