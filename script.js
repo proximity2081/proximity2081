@@ -17,12 +17,16 @@ let texts = [];
 let authors = [];
 let urls = [];
 
+let historyStack = [];
+let historyStackPointer = -1; // needs to be -1 so that when the first quote is picked it becomes 0
+
 let startTime, endTime;
+let currentIndex;
 let currentText = "";
 let totalCharactersTyped = 0;
 let errorCount = 0;
 let typedText = "";
-let startedTyping = false
+let startedTyping = false;
 let previousTypedLength = 0;
 
 let scores = [];
@@ -35,43 +39,62 @@ document.addEventListener("DOMContentLoaded", function() {
     const statsAccuracy = document.getElementById("accuracy-value");
     const statsErrors = document.getElementById("errors-value");
     const statsTime = document.getElementById("time-value");
+    const statsPreviousBtn = document.getElementById("previous-btn");
     const statsResetBtn = document.getElementById("reset-btn");
     const statsNextBtn = document.getElementById("next-btn");
     const loadingAnimation = document.getElementById("loading-animation");
 
     let numberOfBatches = 29;
-    let quotesFilename = "quotes/quotes_"+Math.floor(Math.random()*numberOfBatches).toString()+".json"
-    fetch(quotesFilename)
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(podcast => {
-                podcast["quotes"].forEach(quote => {
-                    let quoteCopy = {};
-                    quoteCopy["url"] = "https://www.youtube.com/watch?v="+podcast["id"]+"&t="+quote["time"];
-                    quoteCopy["author"] = podcast["title"];
-                    quoteCopy["quote"] = quote["text"];
-                    quotes.push(quoteCopy);
-                });
+    let firstQuotesBatchNumber = Math.floor(Math.random()*numberOfBatches);
+    
+    loadFirstQuotesBatch();
+
+    for (let i = 0; i < numberOfBatches; i++) {
+        if (i != firstQuotesBatchNumber) fetchAndAddQuotesBatch(i);
+    }
+
+
+    async function loadFirstQuotesBatch() {
+        await fetchAndAddQuotesBatch(firstQuotesBatchNumber);
+        initialize();
+        loadingAnimation.style.display = "none";
+    }
+    
+    async function fetchAndAddQuotesBatch(batchNumber) {
+        let quotesFilename = "/quotes/quotes_"+batchNumber.toString()+".json";
+        const response = await fetch(quotesFilename);
+        const data = await response.json();
+        data.forEach(podcast => {
+            podcast["quotes"].forEach(quote => {
+                let quoteCopy = {};
+                quoteCopy["url"] = "https://www.youtube.com/watch?v="+podcast["id"]+"&t="+quote["time"];
+                quoteCopy["author"] = podcast["title"];
+                quoteCopy["quote"] = quote["text"];
+                quotes.push(quoteCopy);
             });
-            console.log(quotes.length);
-            texts = quotes.map(element => element["quote"]);
-            authors = quotes.map(element => element["author"]);
-            urls = quotes.map(element => element["url"]);
-            initialize();
-            loadingAnimation.style.display = "none";
-        })
-        .catch(error => {
-            console.log('Error:', error);
         });
+        console.log("Number of quotes: " + quotes.length.toString());
+        texts = quotes.map(element => element["quote"]);
+        authors = quotes.map(element => element["author"]);
+        urls = quotes.map(element => element["url"]);
+    }
 
+    function updateText(index) {
+        currentIndex = index;
+        currentText = texts[index];
+        textDisplay.textContent = currentText;
+        authorDisplay.textContent = authors[index];
+        authorDisplay.href = urls[index];
+    }
 
-    function changeText() {
+    function getNewTextIndex() {
         let index;
-        for (let i=0; i<100; i++) {
+        const maxIterations = 100;
+        for (let i=0; i<maxIterations; i++) {
             index = Math.floor(Math.random()*texts.length);
             alreadyTyped = false;
             for (let j=0; j<scores.length; j++) {
-                if (scores[j].text==texts[index]) {
+                if (scores[j].text == texts[index]) {
                     alreadyTyped = true;
                     break;
                 }
@@ -80,10 +103,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 break;
             }
         }
-        currentText = texts[index];
-        textDisplay.textContent = currentText;
-        authorDisplay.textContent = authors[index];
-        authorDisplay.href = urls[index];
+        return index;
+    }
+
+    function generateNewQuote() {
+        updateText(getNewTextIndex());
+        historyStack.push(currentIndex);
     }
 
     function startTimer() {
@@ -149,14 +174,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (typedText === currentText) {
             saveScore();
             startedTyping = false;
-            totalReset();
-            /*
-            textInput.readOnly = true;
-            setTimeout(function() {
-                totalReset();
-                textInput.readOnly = false;
-            }, 1000);
-            */
+            next();
         } else {
             if (typedText === correctText) {
                 textInput.classList.remove("error");
@@ -169,6 +187,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
         }
         previousTypedLength = typedText.length;
+    }
+
+    function previous() {
+        if (historyStackPointer > 0) updateText(historyStack[--historyStackPointer]);
+        reset();
+    }
+
+    function next() {
+        historyStackPointer++;
+        if (historyStackPointer >= historyStack.length) generateNewQuote();
+        else updateText(historyStack[historyStackPointer]);
+        reset();
     }
 
     function reset() {
@@ -192,20 +222,16 @@ document.addEventListener("DOMContentLoaded", function() {
         statsErrors.textContent = "0";
     }
 
-    function totalReset() {
-        changeText();
-        reset();
-    }
-
     function saveScore() {
         scores.push({"text": currentText, "cpm": getCPM(), "accuracy": getAccuracy()});
     }
 
     function initialize() {
-        setInterval(updateStats, 100);
+        setInterval(updateStats, 500);
         textInput.addEventListener("input", checkInput);
+        statsPreviousBtn.addEventListener("click", previous);
         statsResetBtn.addEventListener("click", reset);
-        statsNextBtn.addEventListener("click", totalReset);
-        totalReset();
+        statsNextBtn.addEventListener("click", next);
+        next();
     }
 });
