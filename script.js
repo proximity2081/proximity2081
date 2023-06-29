@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const statsNextBtn = document.getElementById("next-btn");
     const loadingAnimation = document.getElementById("loading-animation");
 
-    let numberOfBatches = 29;
+    let numberOfBatches = 319;
     let firstQuotesBatchNumber = Math.floor(Math.random()*numberOfBatches);
     
     loadFirstQuotesBatch();
